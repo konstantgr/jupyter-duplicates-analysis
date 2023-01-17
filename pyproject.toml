@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "jupyter-duplicates-analysis"
+version = "0.1.0"
+description = ""
+authors = ["konstantgr <konstantin.grotov@gmail.com>"]
+readme = "README.md"
+packages = [{include = "jupyter_duplicates_analysis"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+matplotlib = "^3.6.3"
+pandas = "^1.5.2"
+tqdm = "^4.64.1"
+statsmodels = "^0.13.5"
+jupyter = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
