@@ -30,7 +30,7 @@ class Experiment:
                 for k, folder in self.in_path.items()}
 
     def _get_files(self):
-        notebook_files = self._get_json_files(self.notebooks_folder, self.max_num)
+        notebook_files = None if not self.notebooks_folder else self._get_json_files(self.notebooks_folder, self.max_num)
         scripts_files = None if not self.scripts_folder else self._get_json_files(self.scripts_folder, self.max_num)
 
         files = {'notebooks': notebook_files, 'scripts': scripts_files}

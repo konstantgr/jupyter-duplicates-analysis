@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def read_clones_data(filepath: Path) -> Dict:
-    with open(filepath, 'r') as f:
+    with filepath.open('r') as f:
         d = json.load(f)
 
         for i, d_i in d.items():
@@ -47,7 +47,7 @@ def is_break(start: int, finish: int, source: str) -> bool:
 
 
 def filter_breaks(clones, source_path: Path) -> List[Dict]:
-    with open(source_path, 'r') as f:
+    with source_path.open('r') as f:
         source = f.read()
     return [clone for clone in clones
             if not is_break(*clone['position'], source)]
