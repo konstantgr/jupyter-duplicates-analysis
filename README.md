@@ -27,7 +27,7 @@ unzip_data('data')
 ```
 
 ## Clones analysis
-
+![Experiment process](figures/process.png)
 The experiment consists of several stages:
 
 0. Deduplication
