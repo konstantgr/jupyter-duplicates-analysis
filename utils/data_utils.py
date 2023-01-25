@@ -22,6 +22,7 @@ def output_data_to_df(base_path: Path):
                 data.append(d)
 
         except TypeError:
+            print(f"ERROR WITH OPEN {path}")
             continue
 
     return pd.json_normalize(data, max_level=1)

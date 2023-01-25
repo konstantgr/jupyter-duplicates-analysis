@@ -1,4 +1,3 @@
-import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -20,18 +19,18 @@ class Experiment:
         self.length_range = None
         self.aggregated_stats = {'notebooks': None, 'scripts': None}
 
-    @staticmethod
-    def _get_json_files(folder, max_num):
-        return [folder / Path(pos_json) for pos_json in os.listdir(folder) if
-                pos_json.endswith('.json')][:max_num]
+        self.cell_separator = "\n# [___CELL_SEPARATOR___]\n"
+
+    def _get_json_files(self, folder: Path):
+        return [json_path for json_path in folder.rglob("*.json")][:self.max_num]
 
     def _get_source_files(self):
         return {k: [get_source_path(file, in_folder=folder) for file in self.files[k]]
                 for k, folder in self.in_path.items()}
 
     def _get_files(self):
-        notebook_files = None if not self.notebooks_folder else self._get_json_files(self.notebooks_folder, self.max_num)
-        scripts_files = None if not self.scripts_folder else self._get_json_files(self.scripts_folder, self.max_num)
+        notebook_files = None if not self.notebooks_folder else self._get_json_files(self.notebooks_folder)
+        scripts_files = None if not self.scripts_folder else self._get_json_files(self.scripts_folder)
 
         files = {'notebooks': notebook_files, 'scripts': scripts_files}
         return files
@@ -42,24 +41,28 @@ class Experiment:
 
         for i, file in tqdm(enumerate(files)):
             data_tmp = read_clones_data(file)
-            try:
-                norm = data_tmp.get('initial_tree_length') if normalize else 1
-                path = source_paths[i] if source_paths else None
-                drop_breaks = drop_breaks if path else None
-
-                stats_tmp = [
-                    get_stats(
-                        filter_clones(data=data_tmp, min_length=min_l, breaks=drop_breaks, source_path=path),
-                        norm=norm
-                    )
-                    for min_l in length_range
-                ]
-                stats_tmp = pd.DataFrame(stats_tmp)
-                stats_tmp['min_length'] = list(length_range)
-
-                stats.append(pd.DataFrame(stats_tmp))
-            except KeyError:
+            if data_tmp is None:
                 continue
+
+            norm = data_tmp.get('initial_tree_length') if normalize else 1
+            path = source_paths[i] if source_paths else None
+            drop_breaks = drop_breaks if path else None
+
+            stats_tmp = []
+            for min_l in length_range:
+                filtered_clones = filter_clones(
+                    data=data_tmp,
+                    min_length=min_l,
+                    breaks=drop_breaks,
+                    source_path=path
+                )
+                clones_stats = get_stats(filtered_clones, norm=norm)
+                stats_tmp.append(clones_stats)
+
+            stats_tmp = pd.DataFrame(stats_tmp)
+            stats_tmp['min_length'] = list(length_range)
+
+            stats.append(pd.DataFrame(stats_tmp))
 
         stats = pd.concat(stats)
         return stats
@@ -102,13 +105,13 @@ class Experiment:
 
 
 if __name__ == "__main__":
-    notebooks_path = Path('data/out/notebooks_1k')
-    scripts_path = Path('data/out/scripts_1k')
+    notebooks_path = Path('../clones-study/data/out/notebooks_1k')
+    scripts_path = Path('../clones-study/data/out/scripts_1k')
 
     e = Experiment(
         notebooks_folder=notebooks_path,
         scripts_folder=scripts_path,
-        max_num=10
+        max_num=1000
     )
 
     min_clone_length, max_clone_length = 3, 90

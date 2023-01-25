@@ -3,17 +3,18 @@ from typing import List, Dict
 from pathlib import Path
 
 
-def read_clones_data(filepath: Path) -> Dict:
+def read_clones_data(filepath: Path) -> Dict | None:
+    first_level_key = "3"
+
     with filepath.open('r') as f:
-        d = json.load(f)
+        clones_dict = json.load(f)
 
-        for i, d_i in d.items():
-            try:
-                d[i] = json.loads(d_i)
-            except (json.decoder.JSONDecodeError, TypeError):
-                continue
-
-        return d
+    if first_level_key not in clones_dict:
+        print(f"ERROR WITH {filepath.name} JSON")
+        return None
+    else:
+        clones_dict[first_level_key] = json.loads(clones_dict[first_level_key])
+        return clones_dict
 
 
 def filter_clones(
