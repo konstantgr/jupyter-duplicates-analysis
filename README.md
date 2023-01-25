@@ -45,8 +45,11 @@ It turns out that we were able to reduce two sets of data corresponding to diffe
 discrete random variables, which we will eventually compare with each other.
 
 $$\{(\text{Clones count}, \text{Minimum clone length}_j)_i \; | \; i = 1 ..N_{files}, j = 3..M\} \to$$
+
 $$\to \{(\text{Minimum clone length}_j, \{\text{Clone count}_i \; | \; i = 1..N_{files} \}) \; | \; i = 1 ..N_{files}, j = 3..M\}$$
+
 $$\to \{(\text{Minimum clone length}_j, \text{Mean clones count}_j \; | \; j = 3..M\} \sim F(\text{Minimum clone length})$$
+
 $$F(\text{Minimum clone length}) \to \frac{F(\text{Minimum clone length})}{\text{normalization factor}}$$
 
 ### Random variables analysis
@@ -59,6 +62,7 @@ Next, it remains for us to find the corresponding quantile in the notebooks.
 Mathematically, this can be described as follows:
 
 $$\theta_{scripts} = 45 \to CDF_{scripts}(\theta_{scripts}) = p_{scripts}$$
+
 $$CDF_{notebooks}^{-1} (p_{scripts}) = \theta_{notebooks}$$
 
 ### Example of usage
