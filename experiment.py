@@ -1,8 +1,8 @@
-import matplotlib.pyplot as plt
+import json
 import pandas as pd
 
 from pathlib import Path
-from utils.processing_utils import read_clones_data, filter_clones, get_stats, get_source_path
+from typing import Dict, List
 from tqdm import tqdm
 
 
@@ -21,14 +21,18 @@ class Experiment:
 
         self.cell_separator = "\n# [___CELL_SEPARATOR___]\n"
 
-    def _get_json_files(self, folder: Path):
+    def _get_json_files(self, folder: Path) -> List[Path]:
         return [json_path for json_path in folder.rglob("*.json")][:self.max_num]
 
-    def _get_source_files(self):
-        return {k: [get_source_path(file, in_folder=folder) for file in self.files[k]]
+    @staticmethod
+    def __get_source_path(name: Path, in_folder: Path) -> Path:
+        return in_folder / Path(str(name).split("/")[-1].replace("#", '/')[:-5])
+
+    def _get_source_files(self) -> Dict[str, List[Path]]:
+        return {k: [self.__get_source_path(file, in_folder=folder) for file in self.files[k]]
                 for k, folder in self.in_path.items()}
 
-    def _get_files(self):
+    def _get_files(self) -> Dict[str, List[Path]]:
         notebook_files = None if not self.notebooks_folder else self._get_json_files(self.notebooks_folder)
         scripts_files = None if not self.scripts_folder else self._get_json_files(self.scripts_folder)
 
@@ -36,11 +40,57 @@ class Experiment:
         return files
 
     @staticmethod
-    def aggregate(files, length_range, source_paths, normalize=False, drop_breaks=False):
+    def read_clones_data(filepath: Path) -> Dict | None:
+        first_level_key = "3"
+
+        with filepath.open('r') as f:
+            clones_dict = json.load(f)
+
+        if first_level_key not in clones_dict:
+            return None
+        else:
+            clones_dict[first_level_key] = json.loads(clones_dict[first_level_key])
+            return clones_dict
+
+    def filter_clones(
+            self,
+            data: Dict,
+            min_length: int = 10,
+            max_length: int = 10_000,
+            breaks: bool = False,
+            source_path: Path = None
+    ) -> List[Dict]:
+        lst = list(filter(
+            lambda f: min_length <= f["clone_length"] <= max_length,
+            data["3"]["groups"]
+        ))
+        if breaks:
+            for i, g in enumerate(lst):
+                lst[i]['clones'] = self.filter_breaks(g['clones'], source_path)
+
+        return lst
+
+    @staticmethod
+    def get_stats(lst: List, norm: int = 1) -> Dict:
+        return {
+            'groups_cnt': len(lst) / norm,
+            'clones_cnt': sum([len(g["clones"]) for g in lst]) / norm
+        }
+
+    def is_break(self, start: int, finish: int, source: str) -> bool:
+        return self.cell_separator in source[start:finish]
+
+    def filter_breaks(self, clones, source_path: Path) -> List[Dict]:
+        with source_path.open('r') as f:
+            source = f.read()
+        return [clone for clone in clones
+                if not self.is_break(*clone['position'], source)]
+
+    def _aggregate(self, files, length_range, source_paths, normalize=False, drop_breaks=False) -> pd.DataFrame:
         stats = []
 
         for i, file in tqdm(enumerate(files)):
-            data_tmp = read_clones_data(file)
+            data_tmp = self.read_clones_data(file)
             if data_tmp is None:
                 continue
 
@@ -50,13 +100,13 @@ class Experiment:
 
             stats_tmp = []
             for min_l in length_range:
-                filtered_clones = filter_clones(
+                filtered_clones = self.filter_clones(
                     data=data_tmp,
                     min_length=min_l,
                     breaks=drop_breaks,
                     source_path=path
                 )
-                clones_stats = get_stats(filtered_clones, norm=norm)
+                clones_stats = self.get_stats(filtered_clones, norm=norm)
                 stats_tmp.append(clones_stats)
 
             stats_tmp = pd.DataFrame(stats_tmp)
@@ -71,37 +121,10 @@ class Experiment:
         self.length_range = length_range
         for files_type, files in self.files.items():
             if files is not None:
-                self.aggregated_stats[files_type] = self.aggregate(
+                self.aggregated_stats[files_type] = self._aggregate(
                     files, length_range, self.source_files.get(files_type),
                     normalize=normalize, drop_breaks=drop_breaks
                 )
-
-    @staticmethod
-    def plot_stats(ax, stats_type, stats, params):
-        x, y = stats.min_length, stats.clones_cnt
-        ax.scatter(x, y, color='k', s=2, alpha=0.1)
-
-        stats_tmp = stats.groupby("min_length").mean().reset_index()
-        x, y = stats_tmp.min_length, stats_tmp.clones_cnt
-        ax.plot(x, y, 'o-', color='r')
-
-        ax.set_title(f"Clones count {stats_type}")
-        ax.set_xlabel("Min clone length")
-        ax.set_ylabel("Clones count")
-
-        if params and params.get('log'):
-            ax.set_yscale('log')
-            ax.set_ylabel("Clones count (log)")
-
-        return ax
-
-    def plot_results(self, params=None, **kwargs):
-        fig, axs = plt.subplots(2, figsize=(6, 10))
-
-        for i, (files_type, stats_df) in enumerate(self.aggregated_stats.items()):
-            axs[i] = self.plot_stats(axs[i], files_type, stats_df, params)
-
-        plt.show()
 
 
 if __name__ == "__main__":
