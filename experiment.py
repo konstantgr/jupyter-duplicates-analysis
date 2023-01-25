@@ -52,14 +52,8 @@ class Experiment:
             clones_dict[first_level_key] = json.loads(clones_dict[first_level_key])
             return clones_dict
 
-    def filter_clones(
-            self,
-            data: Dict,
-            min_length: int = 10,
-            max_length: int = 10_000,
-            breaks: bool = False,
-            source_path: Path = None
-    ) -> List[Dict]:
+    def filter_clones(self, data: Dict, min_length: int = 10, max_length: int = 10_000, breaks: bool = False,
+                      source_path: Path = None) -> List[Dict]:
         lst = list(filter(
             lambda f: min_length <= f["clone_length"] <= max_length,
             data["3"]["groups"]
@@ -84,7 +78,7 @@ class Experiment:
         with source_path.open('r') as f:
             source = f.read()
         return [clone for clone in clones
-                if not self.is_break(*clone['position'], source)]
+                if not self.is_break(*clone['position'], source=source)]
 
     def _aggregate(self, files, length_range, source_paths, normalize=False, drop_breaks=False) -> pd.DataFrame:
         stats = []
@@ -100,12 +94,8 @@ class Experiment:
 
             stats_tmp = []
             for min_l in length_range:
-                filtered_clones = self.filter_clones(
-                    data=data_tmp,
-                    min_length=min_l,
-                    breaks=drop_breaks,
-                    source_path=path
-                )
+                filtered_clones = self.filter_clones(data=data_tmp, min_length=min_l,
+                                                     breaks=drop_breaks, source_path=path)
                 clones_stats = self.get_stats(filtered_clones, norm=norm)
                 stats_tmp.append(clones_stats)
 
@@ -117,7 +107,7 @@ class Experiment:
         stats = pd.concat(stats)
         return stats
 
-    def run(self, length_range=range(3, 60), normalize=False, drop_breaks=False):
+    def run(self, length_range=range(3, 91), normalize=False, drop_breaks=False):
         self.length_range = length_range
         for files_type, files in self.files.items():
             if files is not None:
@@ -137,5 +127,5 @@ if __name__ == "__main__":
         max_num=1000
     )
 
-    min_clone_length, max_clone_length = 3, 90
-    e.run(normalize=False, drop_breaks=False, length_range=range(3, max_clone_length + 1))
+    min_clone_length, max_clone_length = 3, 91
+    e.run(normalize=False, drop_breaks=False, length_range=range(min_clone_length, max_clone_length))
