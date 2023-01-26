@@ -53,14 +53,7 @@ of clones to the minimum length of the duplicate.
 
 We further transform the resulting functional dependence into a distribution mass function by normalization. It turns out that we are able to reduce two sets of data corresponding to different environments to some discrete random variables, which we will compare with each other.
 
-$$\{(\text{Clones count}, \text{Minimum clone length}_j)_i \; | \; i = 1 ..N_{files}, j = 3..M\} \to$$
-
-$$\to \{(\text{Minimum clone length}_j, \{\text{Clone count}_i \; | \; i = 1..N_{files} \}) \; | \; i = 1 ..N_{files}, j = 3..M\}$$
-
-$$\to \{(\text{Minimum clone length}_j, \text{Mean clones count}_j \; | \; j = 3..M\} \sim F(\text{Minimum clone length})$$
-
-$$F(\text{Minimum clone length}) \to \frac{F(\text{Minimum clone length})}{\text{normalization factor}}$$
-
+![Experiment process](figures/formula.png)
 ### Empirical analysis
 
 In [PyCharm](https://www.jetbrains.com/pycharm/), the default value for a minimal size for highlighting is 45 elements of the PSI tree. 
@@ -81,3 +74,4 @@ $$\theta_{scripts} = 45 \to CDF_{scripts}(\theta_{scripts}) = p_{scripts}$$
 $$CDF_{notebooks}^{-1} (p_{scripts}) = \theta_{notebooks}$$
 
 All code and examples can be found in the `clones-study.ipynb` notebook.
+![Experiment process](figures/quantiles.png)
