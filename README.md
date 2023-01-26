@@ -16,7 +16,7 @@ poetry install
 
 ### Setting up the data
 
-You can download the data from [Zenodo](https://doi.org/10.5281/zenodo.7572584)
+You can download the data from [Zenodo](https://doi.org/10.5281/zenodo.7572584).
 
 Then, place the archives `archive_in` and `archive_out` in the `'data'` directory and unpack the archives 
 using the `unzip_data` method:
